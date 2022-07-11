@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "dev.saxo.app",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -55,11 +55,11 @@
     },
     "windows": [
       {
-        "fullscreen": false,
+        "title": "Saxo",
+        "width": 800,
         "height": 600,
         "resizable": true,
-        "title": "Saxo",
-        "width": 800
+        "fullscreen": false
       }
     ]
   }

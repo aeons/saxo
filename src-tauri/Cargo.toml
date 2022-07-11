@@ -1,15 +1,13 @@
 [package]
-name = "app"
+name = "saxo"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-default-run = "app"
+description = "Your Path of Exile chronicler"
+authors = ["Bjørn Madsen <bm@aeons.dk>"]
+license = "MIT"
+repository = "https://github.com/aeons/saxo"
+default-run = "saxo"
 edition = "2021"
 rust-version = "1.57"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
 tauri-build = { version = "1.0.3", features = [] }

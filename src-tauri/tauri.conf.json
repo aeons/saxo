@@ -3,11 +3,11 @@
   "build": {
     "beforeBuildCommand": "pnpm build",
     "beforeDevCommand": "pnpm dev",
-    "devPath": "http://localhost:3000",
+    "devPath": "http://localhost:5173",
     "distDir": "../dist"
   },
   "package": {
-    "productName": "saxo",
+    "productName": "Saxo",
     "version": "0.1.0"
   },
   "tauri": {
@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "dev.saxo.app",
+      "identifier": "dev.saxo.v1",
       "longDescription": "",
       "macOS": {
         "entitlements": null,

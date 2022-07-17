@@ -15,6 +15,10 @@ const config = {
       assets: "dist",
       fallback: "index.html",
     }),
+
+    prerender: {
+      default: true,
+    },
   },
 };
 

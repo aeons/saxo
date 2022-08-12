@@ -1,13 +1,18 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
-import { HopeProvider } from "@hope-ui/solid";
+import { HopeProvider, HopeThemeConfig } from "@hope-ui/solid";
 
 import Saxo from "./Saxo";
+import "./index.css";
 
-const App = (
-  <HopeProvider>
+const config: HopeThemeConfig = {
+  initialColorMode: "dark",
+};
+
+const app = () => (
+  <HopeProvider config={config}>
     <Saxo />
   </HopeProvider>
 );
 
-render(() => App, document.getElementById("root") as HTMLElement);
+render(app, document.getElementById("root") as HTMLElement);

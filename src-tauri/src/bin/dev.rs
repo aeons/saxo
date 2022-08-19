@@ -1,9 +1,12 @@
+use std::io::{Read, SeekFrom};
 use std::path::Path;
 
 use eyre::Result;
 use file_watcher::{FileWatcher, FileWatcherEvent};
 use tail::Tail;
 use tauri::async_runtime::block_on;
+use tokio::fs::File;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_stream::{Stream, StreamExt};
 
 fn main() -> Result<()> {
@@ -12,10 +15,34 @@ fn main() -> Result<()> {
 
 async fn task() -> Result<()> {
     let file_path = Path::new("./test.txt");
-    let watcher = file_watcher::FileWatcher::new(file_path)?;
-    let t = tail::from_file_watcher(watcher)?;
 
-    t.tail().await?;
+    let mut file = File::open(file_path).await?;
+
+    let offset = 10usize;
+
+    file.seek(SeekFrom::Start(offset as u64)).await?;
+
+    let mut buf = vec![];
+
+    // let (offset, bytes) = tail::read_from_offset(&mut file, offset).await?;
+    // let str = String::from_utf8(bytes)?;
+    let read = file.read_to_end(&mut buf).await?;
+    let offset = offset + read;
+    let str = String::from_utf8(buf.clone())?;
+    println!("Read to offset {offset}: '{str}'");
+
+    println!("Press any key to continue...");
+    std::io::stdin().read(&mut [0])?;
+
+    let read = file.read_to_end(&mut buf).await?;
+    let offset = offset + read;
+    let str = String::from_utf8(buf)?;
+    println!("Read to offset {offset}: '{str}'");
+
+    // let watcher = file_watcher::FileWatcher::new(file_path)?;
+    // let t = tail::from_file_watcher(watcher)?;
+    //
+    // t.tail().await?;
 
     // let s = watcher.watch()?;
 
@@ -65,7 +92,7 @@ mod file_watcher {
             &self.file_path
         }
 
-        pub fn watch(mut self) -> Result<impl Stream<Item = FileWatcherEvent>> {
+        pub fn watch(mut self) -> Result<impl Stream<Item=FileWatcherEvent>> {
             self.watcher.configure(Config::PreciseEvents(true))?;
             self.watcher
                 .watch(&self.file_path, notify::RecursiveMode::NonRecursive)?;
@@ -138,11 +165,12 @@ mod tail {
         fs::{self, File},
         io::AsyncRead,
     };
+    use tokio::io::{AsyncReadExt, AsyncSeekExt};
     use tokio_stream::{Stream, StreamExt};
 
     use crate::file_watcher::{self, FileWatcher, FileWatcherEvent};
 
-    pub struct Tail<S: Stream<Item = FileWatcherEvent>> {
+    pub struct Tail<S: Stream<Item=FileWatcherEvent>> {
         file_path: PathBuf,
         events: S,
         file: Option<File>,
@@ -151,14 +179,14 @@ mod tail {
 
     pub fn from_file_watcher(
         watcher: FileWatcher,
-    ) -> Result<Tail<impl Stream<Item = FileWatcherEvent>>> {
+    ) -> Result<Tail<impl Stream<Item=FileWatcherEvent>>> {
         let file_path = watcher.file_path().to_path_buf();
         let s = watcher.watch()?;
 
         Ok(Tail::new(file_path, s))
     }
 
-    impl<S: Stream<Item = FileWatcherEvent> + Unpin> Tail<S> {
+    impl<S: Stream<Item=FileWatcherEvent> + Unpin> Tail<S> {
         pub fn new(file_path: impl AsRef<Path>, events: S) -> Self {
             Self {
                 file_path: file_path.as_ref().to_path_buf(),
@@ -168,14 +196,15 @@ mod tail {
             }
         }
 
-        pub async fn tail(mut self) -> Result<impl Stream<Item = ()>> {
+        pub async fn tail(mut self) -> Result<()> {
             let metadata = fs::metadata(&self.file_path).await?;
             if metadata.is_file() {
                 self.file = Some(File::open(&self.file_path).await?);
                 self.offset = Some(metadata.len());
             };
 
-            Ok(self.events.then(|e| self.handle_event(e)))
+            todo!()
+            // Ok(self.events.then(|e| self.handle_event(e)))
 
             // while let Some(event) = self.events.next().await {
             //     match event {
@@ -207,6 +236,39 @@ mod tail {
         async fn handle_modified(&mut self) -> () {
             println!("Modified: {:?}", &self.file_path)
         }
+    }
+
+    pub async fn tail(file_path: impl AsRef<Path>, events: impl Stream<Item=FileWatcherEvent>) -> Result<()> {
+        let metadata = fs::metadata(&file_path).await?;
+        let (mut file, mut offset) = if metadata.is_file() {
+            (Some(File::open(&file_path).await?), metadata.len())
+        } else {
+            (None, 0)
+        };
+
+        tokio::pin!(events);
+
+       let s = events.then(|event| async {
+            match event {
+                FileWatcherEvent::Created => {
+                    let f = File::open(&file_path).await?;
+                    offset = f.metadata().await?.len();
+                    file = Some(f);
+                    Ok(vec![])
+                }
+                FileWatcherEvent::Removed => todo!(),
+                FileWatcherEvent::Modified => todo!()
+            }
+        });
+
+        todo!()
+    }
+
+    pub async fn read_to_end_from_offset(file: &mut File, offset: u64) -> Result<(u64, Vec<u8>)> {
+        file.seek(SeekFrom::Start(offset)).await?;
+        let mut buf = vec![];
+        let read = file.read_to_end(&mut buf).await?;
+        Ok((offset + read as u64, buf))
     }
 }
 

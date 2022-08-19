@@ -23,7 +23,6 @@ tauri-plugin-window-state = "0.1"
 notify = "5.0.0-pre.15"
 eyre = "0.6.8"
 tokio = { version = "1.19", features = [
-    "rt",
     "rt-multi-thread",
     "sync",
     "fs",
@@ -31,6 +30,7 @@ tokio = { version = "1.19", features = [
 ] }
 tokio-util = "0.7.3"
 tokio-stream = "0.1.9"
+async-stream = "0.3.3"
 
 [features]
 # by default Tauri runs in production mode
